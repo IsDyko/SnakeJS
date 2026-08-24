@@ -9,8 +9,8 @@
  * @param {HTMLCanvasElement} canvas - L'élément canvas représentant la surface de jeu.
  * @returns {{x: number, y: number}} - Un objet contenant les coordonnées `x` et `y` de la nourriture générée.
  */
-function generateFood() {
-  // A compléter
+function generateFood(box, canvas) {
+	let random = Math.floor(Math.random() * box);
 }
 
 /**
@@ -25,5 +25,5 @@ function generateFood() {
  * @param {number} box - La taille d'une case de la grille en pixels, utilisée pour déterminer la taille de la nourriture.
  */
 function drawFood() {
-  // A compléter
+	// A compléter
 }
