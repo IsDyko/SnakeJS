@@ -1,0 +1,76 @@
+name: Snake JS - CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "dev" ] # Déclenche sur main et dev (pratique pour le travail en équipe/ETML)
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  quality-and-build:
+    name: Tests, JSDoc & Build Vite
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Récupération du code source
+      - name: Checkout du dépôt
+        uses: actions/checkout@v4
+
+      # 2. Installation de Node.js (version LTS)
+      - name: Configuration de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      # 3. Installation des dépendances (Vite, Vitest/Jest, JSDoc, etc.)
+      - name: Installation des dépendances
+        run: npm ci
+
+      # 4. Vérification du code (Linter si configuré)
+      - name: Vérification de la syntaxe (ESLint)
+        run: npm run lint --if-present
+
+      # 5. Exécution des tests unitaires (collisions, score, top 5...)
+      - name: Exécution des tests
+        run: npm test
+
+      # 6. Génération de la documentation JSDoc (exigée par le cahier des charges)
+      - name: Génération de la documentation JSDoc
+        run: npm run docs --if-present
+
+      # 7. Compilation du projet avec Vite (vérifie les imports ESM et config.json)
+      - name: Build de production Vite
+        run: npm run build
+        env:
+          # Injection sécurisée des clés JSONBin.io via les Secrets GitHub
+          VITE_JSONBIN_BIN_ID: ${{ secrets.VITE_JSONBIN_BIN_ID }}
+          VITE_JSONBIN_API_KEY: ${{ secrets.VITE_JSONBIN_API_KEY }}
+
+      # 8. Sauvegarde du dossier compilé (dist/) en tant qu'artefact
+      - name: Upload du build Vite
+        uses: actions/upload-artifact@v4
+        with:
+          name: snake-game-dist
+          path: dist/
+
+  # Job optionnel : Déploiement automatique sur GitHub Pages
+  deploy-gh-pages:
+    name: Déploiement sur GitHub Pages
+    needs: quality-and-build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Téléchargement de l'artefact dist/
+        uses: actions/download-artifact@v4
+        with:
+          name: snake-game-dist
+          path: dist/
+
+      - name: Déploiement sur GitHub Pages
+        uses: actions/deploy-pages@v4
